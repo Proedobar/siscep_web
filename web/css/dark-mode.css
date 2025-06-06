@@ -1,0 +1,130 @@
+:root {
+  --dark-bg: #222;
+  --dark-text: #f8f9fa;
+  --dark-link: #868686;
+  --dark-border: #4d5256;
+  --dark-input-bg: #2b3035;
+  --dark-input-text: #e9ecef;
+}
+
+body.dark-mode {
+  background-color: var(--dark-bg);
+  color: var(--dark-text);
+}
+
+body.dark-mode .navbar-dark {
+  background-color: #111 !important;
+}
+
+body.dark-mode .bg-light {
+  background-color: #333 !important;
+}
+
+body.dark-mode .text-muted {
+  color: #adb5bd !important;
+}
+
+/* Restaurar estilos originales de Bootstrap para los botones */
+body.dark-mode .btn-primary {
+  color: #fff;
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+body.dark-mode .btn-secondary {
+  color: #fff;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+body.dark-mode .btn-success {
+  color: #fff;
+  background-color: #198754;
+  border-color: #198754;
+}
+
+body.dark-mode .btn-danger {
+  color: #fff;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+body.dark-mode .btn-warning {
+  color: #000;
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+
+body.dark-mode .btn-info {
+  color: #000;
+  background-color: #0dcaf0;
+  border-color: #0dcaf0;
+}
+
+body.dark-mode .btn-light {
+  color: #000;
+  background-color: #f8f9fa;
+  border-color: #f8f9fa;
+}
+
+body.dark-mode .btn-dark {
+  color: #fff;
+  background-color: #212529;
+  border-color: #212529;
+}
+
+body.dark-mode .card,
+body.dark-mode .alert,
+body.dark-mode .breadcrumb,
+body.dark-mode .form-control {
+  background-color: var(--dark-input-bg);
+  color: var(--dark-input-text);
+  border-color: var(--dark-border);
+}
+
+/* Estilos para la página de login */
+body.dark-mode .logo-side {
+  background-color: #1a1a1a !important;
+}
+
+body.dark-mode .login-card {
+  background-color: var(--dark-input-bg);
+}
+
+body.dark-mode .alert-success {
+  background-color: #051b11;
+  border-color: #0f5132;
+  color: #75b798;
+}
+
+body.dark-mode .alert-danger {
+  background-color: #2c0b0e;
+  border-color: #842029;
+  color: #ea868f;
+}
+
+body.dark-mode .alert-warning {
+  background-color: #332701;
+  border-color: #664d03;
+  color: #ffda6a;
+}
+
+body.dark-mode .alert-info {
+  background-color: #032830;
+  border-color: #087990;
+  color: #6edff6;
+}
+
+body.dark-mode a {
+  color: var(--dark-link);
+}
+
+body.dark-mode .btn-outline-secondary {
+  color: #c4c4c4;
+  border-color: #6c757d;
+}
+
+body.dark-mode footer {
+  background-color: #111 !important;
+  color: #adb5bd;
+} 
