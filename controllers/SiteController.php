@@ -12,6 +12,7 @@ use app\models\ContactForm;
 use app\models\Directores;
 use app\models\Procuradores;
 use app\models\HistoricConstancias;
+use app\models\TfaForm;
 use DateTime;
 use Luecano\NumeroALetras\NumeroALetras;
 use Endroid\QrCode\QrCode;
@@ -23,6 +24,8 @@ use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
 use Endroid\QrCode\Label\Label;
 use chillerlan\QRCode\QRCode as QRGenerator;
 use chillerlan\QRCode\QROptions;
+use app\models\PasswordResetRequestForm;
+use app\models\Users;
 
 class SiteController extends Controller
 {
@@ -110,13 +113,82 @@ class SiteController extends Controller
         }
         
         $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
+        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
+            $user = $model->getUser();
+            
+            // Si el usuario tiene TFA activado
+            if ($user && $user->tfa_on == 1) {
+                // Generar código TFA
+                $tfaCode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+                $user->tfa_code = $tfaCode;
+                $user->tfa_vence = date('Y-m-d H:i:s', strtotime('+5 minutes'));
+                
+                if ($user->save()) {
+                    try {
+                        // Enviar código por correo
+                        Yii::$app->mailer->compose()
+                            ->setTo($user->email)
+                            ->setFrom([Yii::$app->params['senderEmail'] => Yii::$app->params['senderName']])
+                            ->setSubject('Código de Verificación TFA')
+                            ->setHtmlBody("
+                                <h2>Código de Verificación</h2>
+                                <p>Su código de verificación es: <strong>{$tfaCode}</strong></p>
+                                <p>Este código expirará en 5 minutos.</p>
+                            ")
+                            ->send();
+                            
+                        // Guardar datos en sesión para TFA
+                        Yii::$app->session->set('tfa_user_id', $user->user_id);
+                        Yii::$app->session->set('tfa_rememberMe', $model->rememberMe);
+                        
+                        return $this->redirect(['site/tfa']);
+                    } catch (\Exception $e) {
+                        Yii::error('Error al enviar código TFA: ' . $e->getMessage());
+                        Yii::$app->session->setFlash('error', 'Error al enviar el código de verificación. Por favor intente nuevamente.');
+                    }
+                } else {
+                    Yii::$app->session->setFlash('error', 'Error al generar el código de verificación.');
+                }
+            } else {
+                // Si no tiene TFA, hacer login normal
+                if ($model->login()) {
+                    return $this->goBack();
+                }
+            }
         }
 
-        $model->password = '';
         return $this->render('login', [
             'model' => $model,
+        ]);
+    }
+
+    /**
+     * TFA verification action.
+     *
+     * @return Response|string
+     */
+    public function actionTfa()
+    {
+        $this->layout = false;
+        
+        // Verificar si hay un usuario pendiente de verificación TFA
+        if (!Yii::$app->session->has('tfa_user_id')) {
+            Yii::$app->session->setFlash('error', 'No hay una verificación TFA pendiente.');
+            return $this->redirect(['site/login']);
+        }
+        
+        $model = new TfaForm();
+        
+        if ($model->load(Yii::$app->request->post()) && $model->verify()) {
+            // Limpiar datos de sesión TFA
+            Yii::$app->session->remove('tfa_user_id');
+            Yii::$app->session->remove('tfa_rememberMe');
+            
+            return $this->goHome();
+        }
+        
+        return $this->render('tfa', [
+            'model' => $model
         ]);
     }
 
@@ -1131,6 +1203,109 @@ class SiteController extends Controller
         return [
             'hayDirectoresActivos' => $hayDirectoresActivos,
             'hayProcuradoresActivos' => $hayProcuradoresActivos,
+        ];
+    }
+
+    /**
+     * Solicitud de recuperación de contraseña
+     *
+     * @return mixed
+     */
+    public function actionRequestPasswordReset()
+    {
+        $model = new PasswordResetRequestForm();
+        
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+            
+            $data = Yii::$app->request->post();
+            $model->email = $data['email'] ?? '';
+            
+            if ($model->validate(['email'])) {
+                if ($model->sendEmail()) {
+                    return [
+                        'success' => true,
+                        'message' => 'Se ha enviado un código de verificación a su correo electrónico.'
+                    ];
+                } else {
+                    return [
+                        'success' => false,
+                        'message' => 'No se pudo enviar el código de verificación. Por favor intente nuevamente.'
+                    ];
+                }
+            } else {
+                return [
+                    'success' => false,
+                    'message' => $model->getFirstError('email')
+                ];
+            }
+        }
+        
+        return $this->render('request-password-reset', [
+            'model' => $model
+        ]);
+    }
+
+    /**
+     * Verifica el código de recuperación de contraseña
+     *
+     * @return mixed
+     */
+    public function actionVerifyResetCode()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        $model = new PasswordResetRequestForm();
+        $model->email = Yii::$app->request->post('email');
+        $model->verification_code = Yii::$app->request->post('code');
+        
+        if ($model->verifyCode()) {
+            $user = Users::findOne([
+                'email' => $model->email,
+                'verification_code' => $model->verification_code,
+                'is_deleted' => 0
+            ]);
+            
+            return [
+                'success' => true,
+                'nombre' => $user->empleado->nombre,
+                'email' => $user->email
+            ];
+        }
+        
+        return [
+            'success' => false,
+            'message' => 'El código de verificación no es válido'
+        ];
+    }
+
+    /**
+     * Cambia la contraseña del usuario
+     *
+     * @return mixed
+     */
+    public function actionResetPassword()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        $model = new PasswordResetRequestForm();
+        $model->email = Yii::$app->request->post('email');
+        $model->verification_code = Yii::$app->request->post('code');
+        $model->password = Yii::$app->request->post('password');
+        $model->password_confirm = Yii::$app->request->post('password');
+        
+        if ($model->validate(['password', 'password_confirm'])) {
+            if ($model->resetPassword()) {
+                Yii::$app->session->setFlash('success', 'Su contraseña ha sido cambiada correctamente. Puede proceder a iniciar sesión.');
+                return [
+                    'success' => true
+                ];
+            }
+        }
+        
+        return [
+            'success' => false,
+            'message' => 'Hubo un error al cambiar la contraseña'
         ];
     }
 }

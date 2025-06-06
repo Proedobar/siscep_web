@@ -448,16 +448,16 @@ function cargarDatosRecibo(detailId) {
     existingBackdrops.forEach(backdrop => backdrop.remove());
 
     // Realizar la petición AJAX usando la URL correcta de Yii2
-    fetch('<?= \yii\helpers\Url::to(['get-recibo-data']) ?>&id=' + detailId)
+    fetch('<?= \yii\helpers\Url::to(['get-recibo-data']) ?>?id=' + detailId)
         .then(response => {
             if (!response.ok) {
-                throw new Error('Error en la respuesta del servidor');
+                throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
             }
             return response.json();
         })
         .then(data => {
             if (data.error) {
-                throw new Error(data.message);
+                throw new Error(data.message || 'Error al procesar los datos del recibo');
             }
 
             // Actualizar la información en el modal
@@ -512,6 +512,12 @@ function cargarDatosRecibo(detailId) {
         .catch(error => {
             console.error('Error:', error);
             alert('Error al cargar los datos del recibo: ' + error.message);
+            // Cerrar el modal si está abierto
+            const modalElement = document.getElementById('reciboModal');
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            }
         })
         .finally(() => {
             // Remover el indicador de carga

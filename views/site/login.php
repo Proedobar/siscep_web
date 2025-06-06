@@ -303,7 +303,7 @@ $this->beginPage();
                     ]) ?>
 
                     <div class="form-group mt-4">
-                        <?= Html::submitButton('Login', ['class' => 'btn btn-primary w-100', 'name' => 'login-button']) ?>
+                        <?= Html::submitButton('Entrar', ['class' => 'btn btn-primary w-100', 'name' => 'login-button']) ?>
                     </div>
 
                     <div class="d-flex justify-content-between mt-3">
