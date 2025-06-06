@@ -189,12 +189,17 @@ body.dark-mode .tiempo-servicio {
                     <div class="mb-4">
                         <h6 class="fw-bold mb-3">Autenticación de Dos Factores</h6>
                         
-                        <?php $form = ActiveForm::begin(['id' => 'tfa-form']); ?>
+                        <?php $form = ActiveForm::begin([
+                            'id' => 'tfa-form',
+                            'enableAjaxValidation' => true,
+                            'options' => ['class' => 'tfa-form']
+                        ]); ?>
                         <div class="form-check form-switch mb-3">
                             <input type="hidden" name="tfa_toggle" value="1">
                             <input class="form-check-input" type="checkbox" role="switch" id="tfa-switch" 
+                                   name="tfa_enabled" value="1"
                                    <?= $user->tfa_on ? 'checked' : '' ?> 
-                                   onchange="document.getElementById('tfa-form').submit();">
+                                   onchange="toggleTFA(this);">
                             <label class="form-check-label" for="tfa-switch">
                                 <?= $user->tfa_on ? 'Activada' : 'Desactivada' ?>
                             </label>
@@ -252,37 +257,76 @@ body.dark-mode .tiempo-servicio {
 
 <!-- Asegurarse de que Bootstrap JS esté cargado -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+function toggleTFA(checkbox) {
+    const form = document.getElementById('tfa-form');
+    const formData = new FormData(form);
+    
+    // Mostrar loading
+    Swal.fire({
+        title: 'Procesando...',
+        text: 'Por favor espere',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: data.message,
+                confirmButtonText: 'Aceptar'
+            }).then(() => {
+                window.location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: '¡Error!',
+                text: data.message,
+                confirmButtonText: 'Aceptar'
+            });
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: '¡Error!',
+            text: 'Ocurrió un error al procesar la solicitud.',
+            confirmButtonText: 'Aceptar'
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Verificar que se pueda encontrar el botón y el modal
     const btnEliminar = document.getElementById('btnEliminarCuenta');
     const modalEliminar = document.getElementById('deleteAccountModal');
     
-    console.log('Botón encontrado:', btnEliminar !== null);
-    console.log('Modal encontrado:', modalEliminar !== null);
-    
     if (btnEliminar && modalEliminar) {
         // Verificar que Bootstrap esté disponible
         if (typeof bootstrap !== 'undefined') {
-            console.log('Bootstrap encontrado:', bootstrap);
-            
             // Inicializar el modal manualmente
             const modal = new bootstrap.Modal(modalEliminar);
             
             // Agregar evento al botón
             btnEliminar.addEventListener('click', function() {
-                console.log('Botón de eliminar cuenta clickeado');
                 modal.show();
             });
-            
-            console.log('Evento de clic configurado en botón');
         } else {
             console.error('ERROR: Bootstrap no está disponible');
             alert('Error: No se pudo cargar Bootstrap. Contacte al administrador.');
         }
-    } else {
-        console.error('ERROR: No se encontró el botón o el modal');
     }
 });
 </script> 

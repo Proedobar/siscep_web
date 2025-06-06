@@ -11,6 +11,7 @@ use app\assets\AppAsset;
 AppAsset::register($this);
 
 $this->title = 'Verificación de Dos Factores';
+$this->beginPage();
 ?>
 <!DOCTYPE html>
 <html lang="<?= Yii::$app->language ?>">

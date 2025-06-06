@@ -1,7 +1,8 @@
 <?php
 
 return [
-    'adminEmail' => 'admin@example.com',
-    'senderEmail' => 'noreply@example.com',
-    'senderName' => 'Example.com mailer',
+    'adminEmail' => 'soportesiscep@procuraduriaestadobarinas.gob.ve',
+    'senderEmail' => 'soportesiscep@procuraduriaestadobarinas.gob.ve',
+    'senderName' => 'PROCURADURIA GENERAL DEL ESTADO BARINAS',
+    'baseUrl' => 'https://procuraduriaestadobarinas.gob.ve/siscep/web/',
 ];

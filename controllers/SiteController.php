@@ -125,16 +125,11 @@ class SiteController extends Controller
                 
                 if ($user->save()) {
                     try {
-                        // Enviar código por correo
-                        Yii::$app->mailer->compose()
+                        // Enviar código por correo usando la plantilla
+                        Yii::$app->mailer->compose('verification-code', ['code' => $tfaCode])
                             ->setTo($user->email)
                             ->setFrom([Yii::$app->params['senderEmail'] => Yii::$app->params['senderName']])
                             ->setSubject('Código de Verificación TFA')
-                            ->setHtmlBody("
-                                <h2>Código de Verificación</h2>
-                                <p>Su código de verificación es: <strong>{$tfaCode}</strong></p>
-                                <p>Este código expirará en 5 minutos.</p>
-                            ")
                             ->send();
                             
                         // Guardar datos en sesión para TFA
@@ -255,10 +250,40 @@ class SiteController extends Controller
         
         // Manejo para actualizar tfa_on
         if (Yii::$app->request->isPost && isset($_POST['tfa_toggle'])) {
-            $user->tfa_on = $user->tfa_on ? 0 : 1;
-            if ($user->save()) {
-                Yii::$app->session->setFlash('success', 'Configuración de autenticación de dos factores actualizada.');
-                return $this->refresh();
+            try {
+                // Registrar el estado actual para depuración
+                Yii::info('Estado actual de tfa_on: ' . $user->tfa_on);
+                Yii::info('POST recibido: ' . json_encode($_POST));
+                
+                // Actualizar el estado de tfa_on
+                $user->tfa_on = isset($_POST['tfa_enabled']) ? 1 : 0;
+                
+                // Registrar el nuevo estado para depuración
+                Yii::info('Nuevo estado de tfa_on: ' . $user->tfa_on);
+                
+                // Intentar guardar sin validación
+                if (!$user->save(false)) {
+                    Yii::error('Error al guardar configuración TFA: ' . json_encode($user->errors));
+                    Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                    return [
+                        'success' => false,
+                        'message' => 'Error al actualizar la configuración de autenticación de dos factores.'
+                    ];
+                }
+                
+                Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                return [
+                    'success' => true,
+                    'message' => 'La configuración de autenticación de dos factores ha sido actualizada correctamente.'
+                ];
+                
+            } catch (\Exception $e) {
+                Yii::error('Excepción al actualizar TFA: ' . $e->getMessage());
+                Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                return [
+                    'success' => false,
+                    'message' => 'Error al actualizar la configuración de autenticación de dos factores.'
+                ];
             }
         }
         
@@ -517,13 +542,11 @@ class SiteController extends Controller
             }
         }
         
-        // Enviar correo con el código de verificación
-        $sent = Yii::$app->mailer->compose()
+        // Enviar correo con el código de verificación usando la plantilla
+        $sent = Yii::$app->mailer->compose('verification-code', ['code' => $code])
             ->setTo($user->email)
             ->setFrom([Yii::$app->params['adminEmail'] => Yii::$app->name])
             ->setSubject('Código de Verificación - ' . Yii::$app->name)
-            ->setTextBody('Su código de verificación es: ' . $code)
-            ->setHtmlBody('<p>Su código de verificación es: <strong>' . $code . '</strong></p>')
             ->send();
             
         if (!$sent) {

@@ -6,25 +6,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentTheme = localStorage.getItem('theme');
     
     // Si hay un tema guardado, aplicarlo
-    if (currentTheme) {
-        document.body.classList.add(currentTheme);
-        if (currentTheme === 'dark-mode' && themeToggle) {
+    if (currentTheme === 'dark-mode') {
+        document.body.classList.add('dark-mode');
+        if (themeToggle) {
             themeToggle.checked = true;
         }
     } else {
-        // Detectar preferencia del sistema
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.body.classList.add('dark-mode');
-            if (themeToggle) themeToggle.checked = true;
-            localStorage.setItem('theme', 'dark-mode');
+        // Si no hay tema guardado, establecer tema claro por defecto
+        document.body.classList.remove('dark-mode');
+        if (themeToggle) {
+            themeToggle.checked = false;
         }
+        localStorage.setItem('theme', 'light-mode');
     }
     
     // Función para cambiar el tema
     function toggleTheme() {
         if (document.body.classList.contains('dark-mode')) {
             document.body.classList.remove('dark-mode');
-            localStorage.setItem('theme', '');
+            localStorage.setItem('theme', 'light-mode');
         } else {
             document.body.classList.add('dark-mode');
             localStorage.setItem('theme', 'dark-mode');

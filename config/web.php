@@ -34,8 +34,17 @@ $config = [
         'mailer' => [
             'class' => \yii\symfonymailer\Mailer::class,
             'viewPath' => '@app/mail',
-            // send all mails to a file by default.
-            'useFileTransport' => true,
+            // Cambiar a false para enviar correos reales
+            'useFileTransport' => false,
+            // Configuración SMTP para DirectAdmin/Roundcube
+            'transport' => [
+                'scheme' => 'smtps',
+                'host' => 'mail.procuraduriaestadobarinas.gob.ve',
+                'username' => 'soportesiscep@procuraduriaestadobarinas.gob.ve',
+                'password' => 'unbreakable*100pre',
+                'port' => 465,
+                'encryption' => 'ssl',
+            ],
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,

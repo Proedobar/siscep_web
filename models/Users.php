@@ -23,6 +23,8 @@ use yii\web\IdentityInterface;
  * @property string $tfa_code
  * @property string $tfa_vence
  * @property int $is_deleted
+ * @property int $is_night
+ * @property int $is_update
  *
  * @property Empleados $empleado
  * @property Logs[] $logs

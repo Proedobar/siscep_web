@@ -108,23 +108,30 @@ class SignupForm extends Model
      */
     public function sendVerificationCode()
     {
-        // Generar código aleatorio de 6 dígitos
-        $code = sprintf("%06d", mt_rand(1, 999999));
-        
-        // Guardar en sesión (en producción, considerar almacenar en base de datos con tiempo de expiración)
-        Yii::$app->session->set('verification_code', $code);
-        Yii::$app->session->set('verification_email', $this->email);
-        
-        // Enviar correo con el código
-        $sent = Yii::$app->mailer->compose()
-            ->setTo($this->email)
-            ->setFrom([Yii::$app->params['adminEmail'] => Yii::$app->name])
-            ->setSubject('Código de Verificación - ' . Yii::$app->name)
-            ->setTextBody('Su código de verificación es: ' . $code)
-            ->setHtmlBody('<p>Su código de verificación es: <strong>' . $code . '</strong></p>')
-            ->send();
+        try {
+            // Generar código aleatorio de 6 dígitos
+            $code = sprintf("%06d", mt_rand(1, 999999));
             
-        return $sent;
+            // Guardar en sesión (en producción, considerar almacenar en base de datos con tiempo de expiración)
+            Yii::$app->session->set('verification_code', $code);
+            Yii::$app->session->set('verification_email', $this->email);
+            
+            // Enviar correo con el código usando la plantilla
+            $mailer = Yii::$app->mailer->compose('verification-code', ['code' => $code])
+                ->setTo($this->email)
+                ->setFrom([Yii::$app->params['adminEmail'] => Yii::$app->params['senderName']])
+                ->setSubject('Código de Verificación - ' . Yii::$app->name);
+            
+            if (!$mailer->send()) {
+                Yii::error('Error al enviar correo de verificación a: ' . $this->email);
+                return false;
+            }
+            
+            return true;
+        } catch (\Exception $e) {
+            Yii::error('Excepción al enviar correo de verificación: ' . $e->getMessage());
+            return false;
+        }
     }
 
     /**
