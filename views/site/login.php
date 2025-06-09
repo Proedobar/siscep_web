@@ -23,6 +23,7 @@ $this->beginPage();
     <?php $this->head() ?>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         .login-container {
             display: flex;
@@ -238,6 +239,8 @@ $this->beginPage();
                             'inputOptions' => ['class' => 'form-control'],
                             'errorOptions' => ['class' => 'invalid-feedback'],
                         ],
+                        'enableAjaxValidation' => true,
+                        'enableClientValidation' => false,
                     ]); ?>
 
                     <?= $form->field($model, 'username')->textInput(['autofocus' => true])->label('Correo') ?>
@@ -303,7 +306,7 @@ $this->beginPage();
                     ]) ?>
 
                     <div class="form-group mt-4">
-                        <?= Html::submitButton('Entrar', ['class' => 'btn btn-primary w-100', 'name' => 'login-button']) ?>
+                        <?= Html::submitButton('Entrar', ['class' => 'btn btn-primary w-100', 'name' => 'login-button', 'id' => 'login-button']) ?>
                     </div>
 
                     <div class="d-flex justify-content-between mt-3">
@@ -317,6 +320,83 @@ $this->beginPage();
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtener el formulario y el botón
+    const form = document.getElementById('login-form');
+    const submitButton = document.getElementById('login-button');
+    
+    // Agregar evento submit
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Deshabilitar el botón de envío
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...';
+        
+        try {
+            // Obtener los valores del formulario
+            const formData = new FormData(form);
+            
+            // Enviar la solicitud
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const contentType = response.headers.get('content-type');
+            const data = contentType && contentType.includes('application/json') 
+                ? await response.json() 
+                : await response.text();
+            
+            if (typeof data === 'object' && data.success) {
+                // Si la respuesta es JSON y fue exitosa, redirigir
+                window.location.href = data.redirect;
+            } else {
+                // Si la respuesta es HTML, buscar errores
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data, 'text/html');
+                const errorMessages = doc.querySelectorAll('.invalid-feedback');
+                
+                if (errorMessages.length > 0) {
+                    // Si hay errores, mostrarlos con SweetAlert
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Error de autenticación',
+                        html: Array.from(errorMessages).map(error => error.textContent).join('<br>'),
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#3085d6',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Ha ocurrido un error al procesar su solicitud',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6',
+                allowOutsideClick: false,
+                allowEscapeKey: false
+            });
+        } finally {
+            // Rehabilitar el botón de envío
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Entrar';
+        }
+        
+        return false;
+    });
+});
+</script>
 
 <?php $this->endBody() ?>
 </body>

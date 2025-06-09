@@ -136,6 +136,12 @@ class SiteController extends Controller
                         Yii::$app->session->set('tfa_user_id', $user->user_id);
                         Yii::$app->session->set('tfa_rememberMe', $model->rememberMe);
                         
+                        if (Yii::$app->request->isAjax) {
+                            return $this->asJson([
+                                'success' => true,
+                                'redirect' => Yii::$app->urlManager->createUrl(['site/tfa'])
+                            ]);
+                        }
                         return $this->redirect(['site/tfa']);
                     } catch (\Exception $e) {
                         Yii::error('Error al enviar código TFA: ' . $e->getMessage());
@@ -147,9 +153,27 @@ class SiteController extends Controller
             } else {
                 // Si no tiene TFA, hacer login normal
                 if ($model->login()) {
+                    // Actualizar ultima_vez del usuario con timezone de Caracas
+                    $user = Yii::$app->user->identity;
+                    $date = new \DateTime('now', new \DateTimeZone('America/Caracas'));
+                    $user->ultima_vez = $date->format('Y-m-d H:i:s');
+                    $user->save(false);
+                    
+                    if (Yii::$app->request->isAjax) {
+                        return $this->asJson([
+                            'success' => true,
+                            'redirect' => Yii::$app->urlManager->createUrl(['site/index'])
+                        ]);
+                    }
                     return $this->goBack();
                 }
             }
+        }
+
+        if (Yii::$app->request->isAjax) {
+            return $this->renderPartial('login', [
+                'model' => $model,
+            ]);
         }
 
         return $this->render('login', [
@@ -175,6 +199,12 @@ class SiteController extends Controller
         $model = new TfaForm();
         
         if ($model->load(Yii::$app->request->post()) && $model->verify()) {
+            // Actualizar ultima_vez del usuario con timezone de Caracas
+            $user = Yii::$app->user->identity;
+            $date = new \DateTime('now', new \DateTimeZone('America/Caracas'));
+            $user->ultima_vez = $date->format('Y-m-d H:i:s');
+            $user->save(false);
+            
             // Limpiar datos de sesión TFA
             Yii::$app->session->remove('tfa_user_id');
             Yii::$app->session->remove('tfa_rememberMe');
