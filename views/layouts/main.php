@@ -1228,15 +1228,39 @@ body.dark-mode #constanciaModal .alert-danger {
         <div class="sidebar-menu">
             <ul>
                 <li><a href="<?= Yii::$app->homeUrl ?>"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
-                <li><a href="#" onclick="event.preventDefault(); const modal = new bootstrap.Modal(document.getElementById('constanciaModal')); modal.show();"><i class="fas fa-download"></i> <span>Constancia de Trabajo</span></a></li>
-                <li><a href="<?= \yii\helpers\Url::to(['/site/recibos']) ?>"><i class="fas fa-file-alt"></i> <span>Mis Recibos de Pago</span></a></li>
-                <li><a href="<?= \yii\helpers\Url::to(['/nominas']) ?>"><i class="fas fa-upload"></i> <span>Gestión de Nominas</span></a></li>
-                <li><a href="<?= \yii\helpers\Url::to(['/directores']) ?>"><i class="fas fa-user-tie"></i> <span>Directores</span></a></li>
-                <li><a href="<?= \yii\helpers\Url::to(['/procuradores']) ?>"><i class="fas fa-user-tie"></i> <span>Procuradores</span></a></li>
-                <li><a href="<?= \yii\helpers\Url::to(['/users']) ?>"><i class="fas fa-user"></i> <span>Usuarios</span></a></li>
-                <li><a href="<?= \yii\helpers\Url::to(['/blocked-ips']) ?>"><i class="fas fa-shield-alt"></i> <span>IPs Bloqueadas</span></a></li>
-                <li><a href="<?= \yii\helpers\Url::to(['/site/about']) ?>"><i class="fas fa-info-circle"></i> <span>Acerca de</span></a></li>
-                <?php if (Yii::$app->user->isGuest): ?>
+                
+                <?php if (!Yii::$app->user->isGuest): ?>
+                    <?php 
+                    $user = Yii::$app->user->identity;
+                    $rol_id = $user->rol_id;
+                    
+                    // Opciones para todos los roles autenticados
+                    if ($rol_id == 1 || $rol_id == 2 || $rol_id == 3 || $rol_id == 4): ?>
+                        <li><a href="#" onclick="event.preventDefault(); const modal = new bootstrap.Modal(document.getElementById('constanciaModal')); modal.show();"><i class="fas fa-download"></i> <span>Constancia de Trabajo</span></a></li>
+                        <li><a href="<?= \yii\helpers\Url::to(['/site/recibos']) ?>"><i class="fas fa-file-alt"></i> <span>Mis Recibos de Pago</span></a></li>
+                    <?php endif; ?>
+                    
+                    <?php // Opciones solo para Superusuario y Administrador
+                    if ($rol_id == 1 || $rol_id == 2): ?>
+                        <li><a href="<?= \yii\helpers\Url::to(['/nominas']) ?>"><i class="fas fa-upload"></i> <span>Gestión de Nominas</span></a></li>
+                        <li><a href="<?= \yii\helpers\Url::to(['/directores']) ?>"><i class="fas fa-user-tie"></i> <span>Directores</span></a></li>
+                        <li><a href="<?= \yii\helpers\Url::to(['/procuradores']) ?>"><i class="fas fa-user-tie"></i> <span>Procuradores</span></a></li>
+                        <li><a href="<?= \yii\helpers\Url::to(['/users']) ?>"><i class="fas fa-user"></i> <span>Usuarios</span></a></li>
+                        <li><a href="<?= \yii\helpers\Url::to(['/blocked-ips']) ?>"><i class="fas fa-shield-alt"></i> <span>IPs Bloqueadas</span></a></li>
+                    <?php endif; ?>
+                    
+                    <?php // Opciones solo para Operador
+                    if ($rol_id == 4): ?>
+                        <li><a href="<?= \yii\helpers\Url::to(['/nominas']) ?>"><i class="fas fa-upload"></i> <span>Gestión de Nominas</span></a></li>
+                        <li><a href="<?= \yii\helpers\Url::to(['/directores']) ?>"><i class="fas fa-user-tie"></i> <span>Directores</span></a></li>
+                        <li><a href="<?= \yii\helpers\Url::to(['/procuradores']) ?>"><i class="fas fa-user-tie"></i> <span>Procuradores</span></a></li>
+                    <?php endif; ?>
+                    
+                    <?php // Opción Acerca de para todos los roles autenticados
+                    if ($rol_id == 1 || $rol_id == 2 || $rol_id == 3 || $rol_id == 4): ?>
+                        <li><a href="<?= \yii\helpers\Url::to(['/site/about']) ?>"><i class="fas fa-info-circle"></i> <span>Acerca de</span></a></li>
+                    <?php endif; ?>
+                <?php else: ?>
                     <li><a href="<?= \yii\helpers\Url::to(['/site/login']) ?>"><i class="fas fa-sign-in-alt"></i> <span>Iniciar sesión</span></a></li>
                 <?php endif; ?>
             </ul>
@@ -1290,9 +1314,13 @@ body.dark-mode #constanciaModal .alert-danger {
             <a href="<?= \yii\helpers\Url::to(['/site/perfil']) ?>" class="profile-menu-item">
                 <div class="user-info">
                     <div class="user-name"><?= Yii::$app->user->identity->username ?></div>
-                    <div class="user-avatar">
-                        <?= strtoupper(substr(Yii::$app->user->identity->username, 0, 1)) ?>
-                    </div>
+                    <?php if ($user->foto_perfil): ?>
+                        <img src="/siscep/web<?= $user->foto_perfil ?>" class="rounded-circle" style="width: 30px; height: 30px; border: 1px solid #dee2e6; object-fit: cover;">
+                    <?php else: ?>
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                            <i class="fas fa-user fa-4x text-secondary"></i>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </a>
             <div class="profile-menu-separator"></div>

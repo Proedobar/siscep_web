@@ -1264,7 +1264,7 @@ class SiteController extends Controller
             }
         }
         
-        return $this->render('request-password-reset', [
+        return $this->renderPartial('request-password-reset', [
             'model' => $model
         ]);
     }
@@ -1329,6 +1329,118 @@ class SiteController extends Controller
         return [
             'success' => false,
             'message' => 'Hubo un error al cambiar la contraseña'
+        ];
+    }
+
+    /**
+     * Acción para eliminar la foto de perfil del usuario
+     */
+    public function actionEliminarFotoPerfil()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        if (!Yii::$app->user->isGuest) {
+            $user = Yii::$app->user->identity;
+            
+            try {
+                $user->foto_perfil = null;
+                if ($user->save()) {
+                    return [
+                        'success' => true,
+                        'message' => 'Foto de perfil eliminada correctamente'
+                    ];
+                } else {
+                    return [
+                        'success' => false,
+                        'message' => 'Error al eliminar la foto de perfil'
+                    ];
+                }
+            } catch (\Exception $e) {
+                return [
+                    'success' => false,
+                    'message' => 'Error al procesar la solicitud: ' . $e->getMessage()
+                ];
+            }
+        }
+        
+        return [
+            'success' => false,
+            'message' => 'Usuario no autenticado'
+        ];
+    }
+
+    /**
+     * Acción para subir la foto de perfil del usuario
+     */
+    public function actionSubirFotoPerfil()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        if (!Yii::$app->user->isGuest) {
+            $user = Yii::$app->user->identity;
+            
+            try {
+                // Verificar si se recibió la imagen
+                if (!isset($_POST['imagen'])) {
+                    throw new \Exception('No se recibió ninguna imagen');
+                }
+
+                // Obtener la imagen base64
+                $imagen_base64 = $_POST['imagen'];
+                
+                // Verificar que la imagen sea válida
+                if (!preg_match('/^data:image\/(jpeg|png|gif);base64,/', $imagen_base64)) {
+                    throw new \Exception('Formato de imagen no válido');
+                }
+
+                // Decodificar la imagen base64
+                $imagen_data = base64_decode(preg_replace('/^data:image\/(jpeg|png|gif);base64,/', '', $imagen_base64));
+                
+                if (!$imagen_data) {
+                    throw new \Exception('La imagen no es válida');
+                }
+
+                // Crear directorio si no existe
+                $upload_dir = Yii::getAlias('@webroot/upload/profiles/');
+                if (!file_exists($upload_dir)) {
+                    mkdir($upload_dir, 0777, true);
+                }
+
+                // Generar nombre único para la imagen
+                $timestamp = date('YmdHis');
+                $filename = $user->user_id . '_' . $timestamp . '.jpg';
+                $filepath = $upload_dir . $filename;
+
+                // Guardar la imagen
+                if (file_put_contents($filepath, $imagen_data)) {
+                    // Actualizar la ruta en la base de datos
+                    $user->foto_perfil = '/upload/profiles/' . $filename;
+                    
+                    if ($user->save()) {
+                        return [
+                            'success' => true,
+                            'message' => 'Foto de perfil actualizada correctamente',
+                            'foto_perfil' => $user->foto_perfil
+                        ];
+                    } else {
+                        // Si falla el guardado, eliminar la imagen
+                        unlink($filepath);
+                        throw new \Exception('Error al guardar la información en la base de datos');
+                    }
+                } else {
+                    throw new \Exception('Error al guardar la imagen');
+                }
+            } catch (\Exception $e) {
+                return [
+                    'success' => false,
+                    'message' => 'Error al procesar la solicitud: ' . $e->getMessage()
+                ];
+            }
+        }
+        
+        return [
+            'success' => false,
+            'message' => 'Usuario no autenticado'
         ];
     }
 }

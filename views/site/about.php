@@ -43,7 +43,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         </div>
                         <h5 class="card-title fw-bold m-0">Versión</h5>
                     </div>
-                    <p class="card-text fs-5 text-muted">2.0.0</p>
+                    <p class="card-text fs-5 text-muted">2.1.0</p>
                 </div>
             </div>
         </div>
