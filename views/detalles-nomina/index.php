@@ -491,7 +491,7 @@ function cargarDatosRecibo(detailId) {
             // Configurar el botón de descarga
             const btnDescargar = document.getElementById('btnDescargarRecibo');
             btnDescargar.onclick = () => {
-                window.location.href = '<?= \yii\helpers\Url::to(['descargar-recibo']) ?>&detail_id=' + detailId;
+                window.location.href = '<?= \yii\helpers\Url::to(['descargar-recibo']) ?>?detail_id=' + detailId;
             };
 
             // Mostrar el modal

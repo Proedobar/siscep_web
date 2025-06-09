@@ -1318,7 +1318,7 @@ body.dark-mode #constanciaModal .alert-danger {
                         <img src="/siscep/web<?= $user->foto_perfil ?>" class="rounded-circle" style="width: 30px; height: 30px; border: 1px solid #dee2e6; object-fit: cover;">
                     <?php else: ?>
                         <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
-                            <i class="fas fa-user fa-4x text-secondary"></i>
+                            <i class="fas fa-user fa-2x text-secondary"></i>
                         </div>
                     <?php endif; ?>
                 </div>

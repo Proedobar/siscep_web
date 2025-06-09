@@ -1119,7 +1119,7 @@ class SiteController extends Controller
         $ctMonto = $data['cesta_tickets'];
         $totalAsignaciones = $data['total_a'];
         $vac_bono = $data['bono_vac'];
-        $salarioIntegral = $totalAsignaciones + $vac_bono;
+        $salarioIntegral = ($totalAsignaciones + $vac_bono) * 2;
 
         // Convertir salario integral a letras
         $siLetras = $formatter->toMoney($salarioIntegral, 2, ($salarioIntegral > 1000000) ? 'DE BOLÍVARES' : 'BOLÍVARES', 'CÉNTIMOS');
